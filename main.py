@@ -97,7 +97,7 @@ async def process_getid_click(callback_query: types.CallbackQuery):
 @dp.callback_query(lambda c: c.data == 'help')
 async def process_getid_click(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    await callback_query.message.answer(f"Contact to an Admin")
+    await callback_query.message.answer(f"Contact to an Admin\n@linpaing2002")
 
 
 class Form(StatesGroup):
@@ -152,15 +152,16 @@ async def get_username(message: types.Message,state: FSMContext)-> None:
 class PaginationCallback(CallbackData, prefix="pagination"):
     page: int
 
-@dp.message(F.text == ".history")
-async def history(message: types.Message, state: FSMContext) -> None:
-    main_user = message.from_user.id
+@dp.callback_query(F.data == "view_history")
+async def history(query: types.CallbackQuery, state: FSMContext) -> None:
+    main_user = query.from_user.id
     my_tran = db.fetchall('SELECT * FROM transcation WHERE main_user=?', (main_user,))
 
     if my_tran:
-        await send_paginated_history(message, my_tran, page=1)
+        await send_paginated_history(query.message, my_tran, page=1)
     else:
-        await message.answer("You have no transaction history.")
+        await query.message.answer("You have no transaction history.")
+    await query.answer()  # Acknowledge the callback query
 
 async def send_paginated_history(message: types.Message, transactions: list, page: int) -> None:
     per_page = 10  # Number of transactions per page
@@ -211,8 +212,8 @@ async def pagination_callback(query: types.CallbackQuery, callback_data: Paginat
 
 
 
-@dp.message(Form.session,F.text==".price_list")
-async def pricelist(message: types.Message, state: FSMContext) -> None:
+@dp.callback_query(F.data == "price_list")
+async def pricelist(callback_query: types.CallbackQuery, state: FSMContext) -> None:
     # Fetch data from the database
     pri = db.fetchall('SELECT * FROM dia_price')
     pri_ph = db.fetchall('SELECT * FROM dia_price_ph')
@@ -245,14 +246,14 @@ async def pricelist(message: types.Message, state: FSMContext) -> None:
     pdf.output(pdf_file_path)
 
     # Send the PDF file
-    await message.answer_document(FSInputFile(pdf_file_path))
+    await callback_query.message.answer_document(FSInputFile(pdf_file_path))
 
     # Inline menu
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏷 Check smileone.com Pricelist", url="https://www.smile.one/")],
         [InlineKeyboardButton(text="🏠 Back to Menu", callback_data="back_to_menu")],
     ])
-    await message.answer(
+    await callback_query.message.answer(
         "🎉 Explore the website for more options or return to the main menu:",
         reply_markup=keyboard
     )
@@ -294,83 +295,56 @@ async def send_beautified_voucher(message, tran_id, diamond, actual_wp, userid, 
 
 
 
+def remove_unsupported_characters(text):
+    """Remove unsupported characters for FPDF (supports only Latin-1)."""
+    return re.sub(r'[^\x20-\x7E]', '', text)
+
 def generate_pdf_voucher(tran_id, diamond, actual_wp, userid, zoneid, username, status, coin_value, my_bal, formatted_date):
     # Use a temporary directory to save the file
     temp_dir = gettempdir()
     file_path = os.path.join(temp_dir, f"Payment_Voucher_{tran_id}.pdf")
 
     # Initialize the PDF object
-    pdf = FPDF()
+    pdf = FPDF(format='A4')
     pdf.add_page()
-    # Add logo
-    logo_path = "lhp_logo.jpg"
-    if logo_path:
-        pdf.image(logo_path, x=10, y=8, w=30)  
-        pdf.ln(20)  
 
-    
-    # Set header font
-    pdf.set_font("Arial", style='B', size=16)
+    # Add a logo
+    logo_path = "lhp_logo.jpg"
+    if os.path.exists(logo_path):
+        pdf.image(logo_path, x=10, y=8, w=30)
+        pdf.ln(20)
+
+    # Set title
+    pdf.set_font("Helvetica", style="B", size=16)
     pdf.cell(0, 10, "Payment Voucher", ln=True, align="C")
     pdf.ln(10)
 
-    # Voucher details table
-    pdf.set_font("Arial", size=12)
-    
-    # Adding table headers
-    pdf.set_font("Arial", style='B', size=12)
-    pdf.cell(50, 10, "Field", border=1, align="C")
-    pdf.cell(80, 10, "Details", border=1, align="C")
-    pdf.ln()
+    # Voucher details
+    pdf.set_font("Helvetica", size=12)
+    fields = [
+        ("Transaction ID", tran_id),
+        ("Product", f"{diamond} Diamonds"),
+        ("Successful WP", actual_wp),
+        ("User ID", userid),
+        ("Zone ID", zoneid),
+        ("Username", username),
+        ("Status", status),
+        ("Debited from Balance", f"${coin_value:.2f}"),
+        ("Remaining Balance", f"${my_bal:.2f}"),
+        ("Date", formatted_date)
+    ]
 
-    # Add voucher details row by row
-    pdf.set_font("Arial", size=12)
-    pdf.cell(50, 10, "Transaction ID", border=1)
-    pdf.cell(80, 10, tran_id, border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Product", border=1)
-    pdf.cell(80, 10, f"{diamond} Diamonds", border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Successful WP", border=1)
-    pdf.cell(80, 10, str(actual_wp), border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "User ID", border=1)
-    pdf.cell(80, 10, str(userid), border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Zone ID", border=1)
-    pdf.cell(80, 10, str(zoneid), border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Username", border=1)
-    pdf.cell(80, 10, username, border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Status", border=1)
-    pdf.cell(80, 10, status, border=1)
-    pdf.ln()
-
-    # Payment details
-    pdf.cell(50, 10, "Debited from Balance", border=1)
-    pdf.cell(80, 10, f"${coin_value:.2f}", border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Remaining Balance", border=1)
-    pdf.cell(80, 10, f"${my_bal:.2f}", border=1)
-    pdf.ln()
-
-    pdf.cell(50, 10, "Date", border=1)
-    pdf.cell(80, 10, formatted_date, border=1)
-    pdf.ln()
+    # Add details to PDF, removing unsupported characters
+    for field, value in fields:
+        clean_field = remove_unsupported_characters(field)
+        clean_value = remove_unsupported_characters(str(value))
+        pdf.cell(50, 10, clean_field, border=1)
+        pdf.cell(80, 10, clean_value, border=1)
+        pdf.ln()
 
     # Save the PDF
     pdf.output(file_path)
-    
     return file_path
-
 async def process_toupup_voucher(message, tran_id, diamond, actual_wp, userid, zoneid, username, status, coin_value, my_bal, formatted_date):
 
     # Generate PDF voucher
@@ -396,582 +370,776 @@ async def process_toupup_voucher(message, tran_id, diamond, actual_wp, userid, z
     await message.answer_document(pdf_file, caption="🎟️ Here is your payment voucher as a PDF.")
 
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
-@dp.message(Form.session,F.text.regexp(r'.topup'))
-async def toupup(message: types.Message,state: FSMContext)-> None:
-    async def process_toupup(message_text: str):
-        price_l = {
-                '13': 61.50,
-                '23': 122.00,
-                '25': 177.50,
-                '26': 480.00,
-                '27': 1453.00,
-                '28': 2424.00,
-                '29': 3660.00,
-                '30': 607.00,
-        '20340':229.71,
-        '33':402.5,
-        '22590':39,
-        '22591':116.9,
-        '22592':187.5,
-        '22593':385,
-        '22594':39
-            }
-        id_list = ['13','23','25','23+23','25+23','25+25','25+25+13','26','26+23','26+23+23','26+26','27','28','29','30','','','','','','','','','','','25+13','26+25+13','26+13','27+26','26+25','13+23+23','26+25+23','20340','33','22590','22591','22592','22593','22594']
-        user_id = message.from_user.id
-        main_user = user_id
-        my_bal = db.fetchone('SELECT amount FROM balance WHERE user_id=?', (user_id,))
-        my_bal = float(''.join(map(str, my_bal)))
-        mesg = re.sub(r"[\n\t\s]*", "", message.text)
-        print(mesg)
-        userid = mesg.split("(")[0].split(".topup")[1]
-        zoneid = mesg.split("(")[1].split(")")[0]
-        diamond = mesg.split(")")[1]
-        if "wp" in diamond:
-            diamond = diamond.strip()
-            pack_number = diamond.split("wp")[0]
-            actual_wp = 0
-            pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price')
-            coin_value = next((y for z,x, y in pri if x == diamond), None)
-            package_no = next((z for z,x, y in pri if x == diamond), None)
-            get_condition = await smile_one.get_role(userid,zoneid,'16642')
-            current_date = datetime.now()
-            formatted_date = current_date.strftime("%d %B %Y")
-            data = json.loads(get_condition)           
-            if data["message"]=="success":
-                username = data['username']
-                tran_id = "\n"
-                if float(coin_value) < float(my_bal):
-                    for i in range(int(pack_number)):
-                        purchase = await smile_one.get_purchase(userid,zoneid,'16642')
-                        try:
-                            pur_data = json.loads(purchase)
-                            if pur_data['message'] != 'success':
-                                status = "fail"
-                                print("fail")
-                                coin_value = coin_value - 76
-                            else:
-                                actual_wp = actual_wp + 1
-                                status = "success"
-                                print("success")
-                                tran_id += "transcation_id:" + pur_data['order_id']+"\n"
-                        except json.JSONDecodeError as e:
-                            coin_value = coin_value - 76
-                    print("first:",str(my_bal))
-                    my_bal = my_bal - coin_value
-                    print("now:",str(my_bal))
-                    db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                    db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                    await message.answer(f"successful topup")
-                    try:
-                        await process_toupup_voucher(
-                                            message,
-                                            tran_id=tran_id,
-                                            diamond=diamond,
-                                            actual_wp=actual_wp,
-                                            userid=userid,
-                                            zoneid=zoneid,
-                                            username=username,
-                                            status=status,
-                                            coin_value=coin_value,
-                                            my_bal=my_bal,
-                                            formatted_date=formatted_date
-                                        )
+@dp.message(F.text.regexp(r'\.topup'))
+async def toupup(message: types.Message, state: FSMContext) -> None:
+    user_id = message.from_user.id
+    main_user = user_id
 
-                    except:
-                        print("Exception in")
-                        await asyncio.sleep(10)
-                        await process_toupup_voucher(
-                                            message,
-                                            tran_id=tran_id,
-                                            diamond=diamond,
-                                            actual_wp=actual_wp,
-                                            userid=userid,
-                                            zoneid=zoneid,
-                                            username=username,
-                                            status=status,
-                                            coin_value=coin_value,
-                                            my_bal=my_bal,
-                                            formatted_date=formatted_date
-                                        )
-                        print("Exception done")
-                else:
-                    await message.answer(f"Insufficient Balance...")
+    # Price list and ID list (consider moving these to config/database)
+    price_l = {
+        '13': 61.50, '23': 122.00, '25': 177.50, '26': 480.00,
+        '27': 1453.00, '28': 2424.00, '29': 3660.00, '30': 6079.00,
+        '20340': 229.71, '33': 402.5, '22590': 39, '22591': 116.9,
+        '22592': 187.5, '22593': 385, '22594': 39
+    }
+
+    id_list = [
+        '13','23','25','23+23','25+23','25+25','25+25+13','26','26+23',
+        '26+23+23','26+26','27','28','29','30','','','','','','','','','',
+        '','25+13','26+25+13','26+13','27+26','26+25','13+23+23',
+        '26+25+23','20340','33','22590','22591','22592','22593','22594'
+    ]
+
+    async def process_single_account(account_str: str):
+        """Process topup for a single account string supporting two input formats"""
+        try:
+            # Determine the input format
+            if "(" in account_str and ")" in account_str:
+                # Format A: "userid(zoneid)diamond"
+                # Remove unwanted whitespace (tabs, newlines, and spaces)
+                clean_str = re.sub(r"[\n\t\s]*", "", account_str)
+                userid, rest = clean_str.split("(", 1)
+                zoneid, diamond = rest.split(")", 1)
             else:
-                await message.answer(f" {userid} {zoneid} Not Valid Acoount")
-        else:
-            diamond = diamond
-            pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price WHERE package_no NOT BETWEEN 16 AND 25')
-            coin_value = next((y for z,x, y in pri if str(x) == str(diamond)), None)
-            package_no = next((z for z,x, y in pri if str(x) == str(diamond)), None)
-            product_id = id_list[package_no-1]
-            if "+" in product_id:
-                product_id_list = product_id.split("+")
-                get_condition = await smile_one.get_role(userid,zoneid,product_id_list[0])
-                current_date = datetime.now()
-                formatted_date = current_date.strftime("%d %B %Y")
-                data = json.loads(get_condition)            
-                if data["message"]=="success":
-                    username = data['username']
-                    tran_id = "\n"
-                    if (coin_value) < my_bal:
-                        for i in product_id_list:
-                            purchase = await smile_one.get_purchase(userid,zoneid,i)
-                            try:
-                                pur_data = json.loads(purchase)
-                                if pur_data["message"] != 'success':
-                                    status = "fail"
-                                    print(coin_value)
-                                    print(price_l[str(i)])
-                                    coin_value = coin_value - price_l[str(i)]
-                                else:
-                                    status = "success"
-                                    tran_id += "transcation_id:" + pur_data['order_id']+"\n"
-                            except json.JSONDecodeError as e:
-                                coin_value = coin_value - price_l[str(i)]
-                        print("fist:",str(my_bal))
-                        my_bal = my_bal - coin_value
-                        print("now:",str(my_bal))
-                        db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                        db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                        actual_wp = 0
-                        try:
-                            await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
-                        except:
-                            print("Exception in")
-                            await asyncio.sleep(10)
-                            await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
-                            print("Exception Done")
-                    else:
-                        await message.answer(f"Insufficient Balance")
-                else:
-                    await message.answer(f"{userid} {zoneid} Not Valid Acoount")
-            else:        
-                get_condition = await smile_one.get_role(userid,zoneid,product_id)
-                current_date = datetime.now()
-                formatted_date = current_date.strftime("%d %B %Y")
-                data = json.loads(get_condition)            
-                if data["message"]=="success":
-                    username = data['username']
-                    tran_id = "\n"
-                    if (coin_value) < my_bal:
-                        print(product_id)
-                        purchase = await smile_one.get_purchase(userid,zoneid,product_id)
-                        pur_data = json.loads(purchase)
-                        if pur_data["message"] != 'success':
-                            status = "fail"
-                            print(coin_value)
-                            print(price_l[str(product_id)])
-                            coin_value = coin_value - price_l[str(product_id)]
-                        else:
-                            status = "success"
-                            tran_id += "transcation_id:" + pur_data['order_id'] +"\n"
-                        print("fist:",str(my_bal))
-                        my_bal = my_bal - coin_value
-                        print("now:",str(my_bal))
-                        db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                        db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                        await message.answer(f"successful topup")
-                        actual_wp = 0
-                        try:
-                            await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
-                        except:
-                            print("Exception in")
-                            await asyncio.sleep(10)
+                # Format B: "userid zoneid diamond"
+                parts = account_str.split()
+                if len(parts) != 3:
+                    raise ValueError("Expected three parts (userid, zoneid, diamond)")
+                userid, zoneid, diamond = parts
+        except Exception as e:
+            await message.answer(f"⚠️ Invalid format: {account_str}")
+            return
 
-                            await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
-                            print("Exception done")
-                    else:
-                        await message.answer(f"Insufficient Balance...")
-                else:
-                    await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-    await asyncio.gather(process_toupup(message.text))
+        try:
+            # Get current balance
+            my_bal_row = db.fetchone('SELECT amount FROM balance WHERE user_id=?', (user_id,))
+            if not my_bal_row:
+                await message.answer("❌ Could not retrieve your balance")
+                return
 
-@dp.message(Form.session,F.text.regexp(r'.ph_topup'))
-async def toupup_ph(message: types.Message,state: FSMContext)-> None:
-    async def process_toupup_ph(message_text: str):
-        price_l = {
-                '212': 9.50,
-                '213': 20.00,
-                '214': 47.50,
-                '215': 95.00,
-                '216': 190.00,
-                '217': 285.00,
-                '218': 475.00,
-                '219': 950.00,
-		'20338':229.71
-            }
-        id_list = ['212','213','214','215','216','217','218','219','20338']
-        user_id = message.from_user.id
-        main_user = user_id
-        my_bal = db.fetchone('SELECT amount FROM balance_ph WHERE user_id=?', (user_id,))
-        my_bal = float(''.join(map(str, my_bal)))
-        mesg = re.sub(r"[\n\t\s]*", "", message.text)
-        print(mesg)
-        userid = mesg.split("(")[0].split(".ph_topup")[1]
-        zoneid = mesg.split("(")[1].split(")")[0]
-        diamond = mesg.split(")")[1]
-        diamond = int(diamond)
-        pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price_ph')
-        coin_value = next((y for z,x, y in pri if int(x) == diamond), None)
-        package_no = next((z for z,x, y in pri if int(x) == diamond), None)
-        product_id = id_list[package_no-1]
-        get_condition = smile_one_ph.get_role(userid,zoneid,product_id)
-        current_date = datetime.now()
-        formatted_date = current_date.strftime("%d %B %Y")
-        data = json.loads(get_condition)            
-        if data["message"]=="success":
-            username = data['username']
-            tran_id = "\n"
-            if (coin_value) < my_bal:
-                print(product_id)
-                purchase = smile_one_ph.get_purchase(userid,zoneid,product_id)
-                try:
-                    pur_data = json.loads(purchase)
-                    if pur_data["message"] != 'success':
-                        status = "fail"
-                        print(coin_value)
-                        print(price_l[str(product_id)])
-                        coin_value = coin_value - price_l[str(product_id)]
-                    else:
-                        status = "success"
-                        tran_id += "transcation_id:" + pur_data['order_id'] +"\n"
-                except json.JSONDecodeError as e:
-                    coin_value = coin_value - price_l[str(product_id)]
-                print("fist:",str(my_bal))
-                my_bal = my_bal - coin_value
-                print("now:",str(my_bal))
-                db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                db.query("update balance_ph set amount=? where user_id=?",(my_bal,user_id))
-                await message.answer(f"successful topup")
-                actual_wp = 0
-                try:
-                    await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
-                except:
-                    print("Exception in")
-                    await asyncio.sleep(10)
-                    await process_toupup_voucher(
-                                                message,
-                                                tran_id=tran_id,
-                                                diamond=diamond,
-                                                actual_wp=actual_wp,
-                                                userid=userid,
-                                                zoneid=zoneid,
-                                                username=username,
-                                                status=status,
-                                                coin_value=coin_value,
-                                                my_bal=my_bal,
-                                                formatted_date=formatted_date
-                                            )
+            my_bal = float(my_bal_row[0])
+            current_date = datetime.now().strftime("%d %B %Y")
 
-                    print("Exception done")
-            else:
-                await message.answer(f"Insufficient Balance...")
-        else:
-            await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-    await asyncio.gather(process_toupup_ph(message.text))
-
-@dp.message(Form.session,F.text.regexp(r'.bulktopup'))
-async def bulktopup(message: types.Message,state: FSMContext)-> None:
-    async def process_bulk_toupup(message_text: str):
-        price_l = {
-                '13': 61.50,
-                '23': 122.00,
-                '25': 177.50,
-                '26': 480.00,
-                '27': 1453.00,
-                '28': 2424.00,
-                '29': 3660.00,
-                '30': 607.00,
-        '20340':229.71,
-        '33':402.5,
-        '22590':39,
-        '22591':116.9,
-        '22592':187.5,
-        '22593':385,
-        '22594':39
-            }
-        id_list = ['13','23','25','23+23','25+23','25+25','25+25+13','26','26+23','26+23+23','26+26','27','28','29','30','','','','','','','','','','','25+13','26+25+13','26+13','27+26','26+25','13+23+23','26+25+23','20340','33','22590','22591','22592','22593','22594']
-        user_id = message.from_user.id
-        main_user = user_id
-        voucher = f"\tVoucher\n\t============\n\n"
-        my_bal = db.fetchone('SELECT amount FROM balance WHERE user_id=?', (user_id,))
-        my_bal = float(''.join(map(str, my_bal)))
-        block = message.text.split(",")
-        block = list(filter(None, block))
-        current_date = datetime.now()
-        formatted_date = current_date.strftime("%d %B %Y")
-        for i in range(len(block)):
-            mesg = re.sub(r"[\n\t\s]*", "", block[i])
-            print(mesg)
-            three_value = re.findall(r'\d+\(\d+\)(\d+wp|\d+)',mesg)
-            two_value = re.findall(r'\d+\(\d+\)',mesg)
-            diamond  = three_value[0]
-            userid = two_value[0].split("(")[0]
-            zoneid = two_value[0].split("(")[1].split(")")[0]
+            # Handle WP packages if "wp" is present in diamond.
             if "wp" in diamond:
-                pack_number = diamond.split("wp")[0]
+                if diamond.startswith("wp"):
+                    # Extract the number that follows "wp"
+                    pack_number = diamond[len("wp"):]
+                else:
+                    # Fallback: if not starting with "wp", use the original logic.
+                    pack_number = diamond.split("wp")[0]
                 actual_wp = 0
-                pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price')
-                coin_value = next((y for z,x, y in pri if x == diamond), None)
-                package_no = next((z for z,x, y in pri if x == diamond), None)
-                get_condition = await smile_one.get_role(userid,zoneid,'16642')
-                current_date = datetime.now()
-                formatted_date = current_date.strftime("%d %B %Y")
-                data = json.loads(get_condition)  
-                if data["message"]=="success":
-                    username = data['username']
-                    tran_id = "\n"
-                    if (coin_value) < my_bal:
-                        for i in range(int(pack_number)):
-                            purchase = await smile_one.get_purchase(userid,zoneid,'16642')
-                            try:
-                                pur_data = json.loads(purchase)
-                                if pur_data["message"] != 'success':
-                                    status = "fail"
-                                    print(coin_value)
-                                    print("76")
-                                    print("fail")
-                                    coin_value = coin_value - 76
-                                else:
-                                    actual_wp = actual_wp + 1
-                                    status = "success"
-                                    print(status)
-                                    tran_id += "transcation_id:" + pur_data['order_id'] + "\n"
-                            except json.JSONDecodeError as e:
-                                coin_value = coin_value - 76
-                        print("bulk first:",str(my_bal))
-                        my_bal = my_bal - coin_value
-                        print("bulk now:",str(my_bal))
-                        db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                        db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                        await message.answer(f"successful topup")
-                        voucher += f"\n\n\ntransaction id:\t{tran_id}product:\t💎{hbold(diamond)}\nsuccessful_wp:\t{hbold(actual_wp)}\nuserid:\t👤{hbold(userid)}\t🆔{hbold(zoneid)}\nusername:{hbold(username)}\nStatus: {hbold(status)}\n\n\nDebited From Balance:\t{hbold(coin_value)}\nBalance:\t${hbold(my_bal)}"
-                    else:
-                        await message.answer(f"Insufficient Balance")
-                else:
-                    await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-            else:
-                diamond = diamond
-                pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price WHERE package_no NOT BETWEEN 16 AND 25')
-                coin_value = next((y for z,x, y in pri if str(x) == str(diamond)), None)
-                package_no = next((z for z,x, y in pri if str(x) == str(diamond)), None)
-                product_id = id_list[package_no-1]
-                if "+" in product_id:
-                    product_id_list = product_id.split("+")
-                    get_condition = await smile_one.get_role(userid,zoneid,product_id_list[0])
-                    current_date = datetime.now()
-                    formatted_date = current_date.strftime("%d %B %Y")
-                    data = json.loads(get_condition)            
-                    if data["message"]=="success":
-                        username = data['username']
-                        tran_id = "\n"
-                        if (coin_value) < my_bal:
-                            for i in product_id_list:
-                                purchase = await smile_one.get_purchase(userid,zoneid,i)
-                                try:
-                                    pur_data = json.loads(purchase)
-                                    if pur_data["message"] != 'success':
-                                        status = "fail"
-                                        print(coin_value)
-                                        print(price_l[str(i)])
-                                        coin_value = coin_value - price_l[str(i)]
-                                    else:
-                                        status = "success"
-                                        tran_id += "transcation_id:" + pur_data['order_id']+ "\n"
-                                except json.JSONDecodeError as e:
-                                    coin_value = coin_value - price_l[str(i)]
-                            print("bulk first:",str(my_bal))
-                            my_bal = my_bal - coin_value
-                            print("bulk now:",str(my_bal))
-                            db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                            db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                            await message.answer(f"successful topup")
-                            voucher += f"\n\n\ntransaction id:\t{tran_id}product:\t💎{hbold(diamond)}\nuserid:\t👤{hbold(userid)}\t🆔{hbold(zoneid)}\nusername:{hbold(username)}\nStatus: {hbold(status)}\n\n\nDebited From Balance:\t{hbold(coin_value)}\nBalance:\t${hbold(my_bal)}"
+
+                # Get pricing info
+                pri = db.fetchall('SELECT package_no, diamond, price FROM dia_price')
+                coin_value = next((price for pkg, d, price in pri if d == diamond), None)
+                package_no = next((pkg for pkg, d, price in pri if d == diamond), None)
+
+                # Verify user account
+                account_info = await smile_one.get_role(userid, zoneid, '16642')
+                data = json.loads(account_info)
+
+                if data.get("message") != "success":
+                    await message.answer(f"❌ Invalid account: {userid} {zoneid}")
+                    return
+
+                username = data['username']
+                tran_id = []
+                status = "success"
+
+                if float(coin_value) > my_bal:
+                    await message.answer("❌ Insufficient balance")
+                    return
+
+                # Process WP purchases (repeat for the number provided after "wp")
+                for _ in range(int(pack_number)):
+                    purchase = await smile_one.get_purchase(userid, zoneid, '16642')
+                    try:
+                        pur_data = json.loads(purchase)
+                        if pur_data['message'] == 'success':
+                            actual_wp += 1
+                            tran_id.append(pur_data['order_id'])
                         else:
-                            await message.answer(f"Insufficient Balance")
-                    else:
-                        await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-                else:
-                    get_condition = await smile_one.get_role(userid,zoneid,product_id)
-                    current_date = datetime.now()
-                    formatted_date = current_date.strftime("%d %B %Y")
-                    data = json.loads(get_condition)            
-                    if data["message"]=="success":
+                            coin_value -= 76
+                    except json.JSONDecodeError:
+                        coin_value -= 76
+
+                # Update balance and database
+                my_bal -= coin_value
+                db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                db.query(
+                    "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                    (user_id, diamond, coin_value, current_date, status, main_user)
+                )
+
+                # Send voucher
+                await process_toupup_voucher(
+                    message,
+                    tran_id="\n".join(tran_id),
+                    diamond=diamond,
+                    actual_wp=actual_wp,
+                    userid=userid,
+                    zoneid=zoneid,
+                    username=username,
+                    status=status,
+                    coin_value=coin_value,
+                    my_bal=my_bal,
+                    formatted_date=current_date
+                )
+
+            else:
+                # Handle regular diamond purchases
+                pri = db.fetchall('SELECT package_no, diamond, price FROM dia_price WHERE package_no NOT BETWEEN 16 AND 25')
+                coin_value = next((price for pkg, d, price in pri if str(d) == str(diamond)), None)
+                package_no = next((pkg for pkg, d, price in pri if str(d) == str(diamond)), None)
+                print(package_no)
+                if not package_no or package_no - 1 >= len(id_list):
+                    await message.answer(f"⚠️ Invalid diamond package: {diamond}")
+                    return
+
+                # Get product id from list based on package number.
+                product_id = id_list[package_no - 1]
+                print(product_id)
+                # Check if product_id is a composite (contains '+')
+                if '+' in product_id:
+                    # Split the composite product_id into its sub-products.
+                    sub_products = product_id.split('+')
+                    all_verified = True
+                    username = None
+                    # Verify the account for each sub-product.
+                    for sp in sub_products:
+                        account_info = await smile_one.get_role(userid, zoneid, sp)
+                        data = json.loads(account_info)
+                        if data.get("message") != "success":
+                            await message.answer(f"❌ Invalid account: {userid} {zoneid} for product {sp}")
+                            all_verified = False
+                            break
+                        # Assume that the username is the same for each product.
                         username = data['username']
-                        tran_id = "\n"
-                        if (coin_value) < my_bal:
-                            purchase = await smile_one.get_purchase(userid,zoneid,product_id)
+                    if not all_verified:
+                        return
+
+                    if coin_value > my_bal:
+                        await message.answer("❌ Insufficient balance")
+                        return
+
+                    tran_id = []
+                    status = "success"
+                    # Process purchase for each sub-product.
+                    for sp in sub_products:
+                        purchase = await smile_one.get_purchase(userid, zoneid, sp)
+                        try:
                             pur_data = json.loads(purchase)
                             if pur_data["message"] != 'success':
                                 status = "fail"
-                                print(coin_value)
-                                print(price_l[str(product_id)])
-                                coin_value = coin_value - price_l[str(product_id)]
+                                tran_id.append(f"Failed transaction for product {sp}")
                             else:
-                                status = "success"
-                                tran_id += "transcation_id:" + pur_data['order_id']+ "\n"
-                            print("bulk first:",str(my_bal))
-                            my_bal = my_bal - coin_value
-                            print("bulk now:",str(my_bal))
-                            db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                            db.query("update balance set amount=? where user_id=?",(my_bal,user_id))
-                            await message.answer(f"successful topup")
-                            voucher += f"\n\n\n{tran_id}product:\t💎{hbold(diamond)}\nuserid:\t👤{hbold(userid)}\t🆔{hbold(zoneid)}\nusername:{hbold(username)}\nStatus: {hbold(status)}\n\n\nDebited From Balance:\t{hbold(coin_value)}\nBalance:\t${hbold(my_bal)}"
-                        else:
-                            await message.answer(f"{userid} {zoneid} Insufficient Balance...")
-                    else:
-                        await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-        voucher += f"\n{formatted_date}"
-        try:
-            await message.answer(voucher)
-        except:
-            print("exception in")
-            await asyncio.sleep(10)
-            await message.answer(voucher)
-            print("exception done")
-    await asyncio.gather(process_bulk_toupup(message.text))
+                                tran_id.append(pur_data['order_id'])
+                        except json.JSONDecodeError:
+                            status = "fail"
+                            tran_id.append(f"Failed transaction for product {sp}")
 
-@dp.message(Form.session,F.text.regexp(r'.ph_bulktopup'))
-async def bulktopup_ph(message: types.Message,state: FSMContext)-> None:
-    async def process_bulk_toupup_ph(message_text: str):
-        price_l = {
-                '212': 9.50,
-                '213': 20.00,
-                '214': 47.50,
-                '215': 95.00,
-                '216': 190.00,
-                '217': 285.00,
-                '218': 475.00,
-                '219': 950.00,
-		'20338':229.71
-            }
-        id_list = ['212','213','214','215','216','217','218','219','20338']
-        user_id = message.from_user.id
-        main_user = user_id
-        voucher = f"\tVoucher\n\t============\n\n"
-        my_bal = db.fetchone('SELECT amount FROM balance_ph WHERE user_id=?', (user_id,))
-        print(my_bal)
-        my_bal = float(''.join(map(str, my_bal)))
-        block = message.text.split(",")
-        block = list(filter(None, block))
-        current_date = datetime.now()
-        formatted_date = current_date.strftime("%d %B %Y")
-        for i in range(len(block)):
-            mesg = re.sub(r"[\n\t\s]*", "", block[i])
-            print(mesg)
-            three_value = re.findall(r'\d+\(\d+\)(\d+wp|\d+)',mesg)
-            two_value = re.findall(r'\d+\(\d+\)',mesg)
-            diamond  = three_value[0]
-            userid = two_value[0].split("(")[0]
-            zoneid = two_value[0].split("(")[1].split(")")[0]
-            diamond = int(diamond)
-            pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price_ph')
-            coin_value = next((y for z,x, y in pri if int(x) == diamond), None)
-            package_no = next((z for z,x, y in pri if int(x) == diamond), None)
-            product_id = id_list[package_no-1]
-            get_condition = smile_one_ph.get_role(userid,zoneid,product_id)
-            current_date = datetime.now()
-            formatted_date = current_date.strftime("%d %B %Y")
-            data = json.loads(get_condition)            
-            if data["message"]=="success":
-                username = data['username']
-                tran_id = "\n"
-                if (coin_value) < my_bal:
-                    purchase = smile_one_ph.get_purchase(userid,zoneid,product_id)
-                    pur_data = json.loads(purchase)
-                    if pur_data["message"] != 'success':
-                        status = "fail"
-                        print(coin_value)
-                        print(price_l[str(product_id)])
-                        coin_value = coin_value - price_l[str(product_id)]
-                    else:
-                        status = "success"
-                        tran_id += "transcation_id:" + pur_data['order_id']+ "\n"
-                    print("bulk first:",str(my_bal))
-                    my_bal = my_bal - coin_value
-                    print("bulk now:",str(my_bal))
-                    db.query("insert into transcation (user_id,diamond,price,t_date,status,main_user) values (?,?,?,?,?,?)",(user_id,diamond,coin_value,formatted_date,status,main_user))
-                    db.query("update balance_ph set amount=? where user_id=?",(my_bal,user_id))
-                    await message.answer(f"successful topup")
-                    voucher += f"\n\n\n{tran_id}product:\t💎{hbold(diamond)}\nuserid:\t👤{hbold(userid)}\t🆔{hbold(zoneid)}\nusername:{hbold(username)}\nStatus: {hbold(status)}\n\n\nDebited From Balance:\t{hbold(coin_value)}\nBalance:\t${hbold(my_bal)}"
+                    # Update balance and record the transaction.
+                    my_bal -= coin_value
+                    db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                    db.query(
+                        "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                        (user_id, diamond, coin_value, current_date, status, main_user)
+                    )
+
+                    # Send voucher
+                    await process_toupup_voucher(
+                        message,
+                        tran_id="\n".join(tran_id),
+                        diamond=diamond,
+                        actual_wp=0,
+                        userid=userid,
+                        zoneid=zoneid,
+                        username=username,
+                        status=status,
+                        coin_value=coin_value,
+                        my_bal=my_bal,
+                        formatted_date=current_date
+                    )
+
                 else:
-                    await message.answer(f"{userid} {zoneid} Insufficient Balance...")
-            else:
-                await message.answer(f"{userid} {zoneid} is not Valid Acoount")
-        voucher += f"\n{formatted_date}"
-        try:
-            await message.answer(voucher)
-        except:
-            print("exception in")
-            await asyncio.sleep(10)
-            await message.answer(voucher)
-            print("exception done")
-    await asyncio.gather(process_bulk_toupup_ph(message.text))
+                    # Process single product purchase
+                    account_info = await smile_one.get_role(userid, zoneid, product_id)
+                    data = json.loads(account_info)
 
-@dp.message(Form.session, F.text.regexp(r'\.check_balance'))
-async def check_balance(message: types.Message, state: FSMContext) -> None:
+                    if data.get("message") != "success":
+                        await message.answer(f"❌ Invalid account: {userid} {zoneid}")
+                        return
+
+                    username = data['username']
+                    tran_id = []
+                    status = "success"
+
+                    if coin_value > my_bal:
+                        await message.answer("❌ Insufficient balance")
+                        return
+
+                    # Process purchase for the single product.
+                    purchase = await smile_one.get_purchase(userid, zoneid, product_id)
+                    try:
+                        pur_data = json.loads(purchase)
+                        if pur_data["message"] != 'success':
+                            status = "fail"
+                            coin_value -= price_l.get(str(product_id), 0)
+                            tran_id.append("Failed transaction")
+                        else:
+                            tran_id.append(pur_data['order_id'])
+                    except json.JSONDecodeError:
+                        coin_value -= price_l.get(str(product_id), 0)
+                        status = "fail"
+
+                    # Update balance and record the transaction.
+                    my_bal -= coin_value
+                    db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                    db.query(
+                        "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                        (user_id, diamond, coin_value, current_date, status, main_user)
+                    )
+
+                    # Send voucher
+                    await process_toupup_voucher(
+                        message,
+                        tran_id="\n".join(tran_id),
+                        diamond=diamond,
+                        actual_wp=0,
+                        userid=userid,
+                        zoneid=zoneid,
+                        username=username,
+                        status=status,
+                        coin_value=coin_value,
+                        my_bal=my_bal,
+                        formatted_date=current_date
+                    )
+
+        except Exception as e:
+            await message.answer(f"⚠️ Error processing {account_str}: {str(e)}")
+            logger.exception(f"Error processing {account_str}")
+
+    # Split and process all accounts
+    try:
+        # Get text after the .b command and split by commas.
+        accounts = message.text.split('.topup', 1)[1].strip().split(',')
+        for account in accounts:
+            if account.strip():
+                await process_single_account(account.strip())
+    except IndexError:
+        await message.answer("❌ Invalid command format. Use:\n"
+                             "Format A: .topup userid(zoneid)diamond,userid2(zone2)diamond2,...\n"
+                             "Format B: .topup userid zoneid diamond,userid2 zone2 diamond2,...")
+
+
+
+@dp.message(F.text.regexp(r'\.b'))
+async def toupup(message: types.Message, state: FSMContext) -> None:
     user_id = message.from_user.id
+    main_user = user_id
+
+    # Price list and ID list (consider moving these to config/database)
+    price_l = {
+        '13': 61.50, '23': 122.00, '25': 177.50, '26': 480.00,
+        '27': 1453.00, '28': 2424.00, '29': 3660.00, '30': 6079.00,
+        '20340': 229.71, '33': 402.5, '22590': 39, '22591': 116.9,
+        '22592': 187.5, '22593': 385, '22594': 39
+    }
+
+    id_list = [
+        '13','23','25','23+23','25+23','25+25','25+25+13','26','26+23',
+        '26+23+23','26+26','27','28','29','30','','','','','','','','','',
+        '','25+13','26+25+13','26+13','27+26','26+25','13+23+23',
+        '26+25+23','20340','33','22590','22591','22592','22593','22594'
+    ]
+
+    async def process_single_account(account_str: str):
+        """Process topup for a single account string supporting two input formats"""
+        try:
+            # Determine the input format
+            if "(" in account_str and ")" in account_str:
+                # Format A: "userid(zoneid)diamond"
+                # Remove unwanted whitespace (tabs, newlines, and spaces)
+                clean_str = re.sub(r"[\n\t\s]*", "", account_str)
+                userid, rest = clean_str.split("(", 1)
+                zoneid, diamond = rest.split(")", 1)
+            else:
+                # Format B: "userid zoneid diamond"
+                parts = account_str.split()
+                if len(parts) != 3:
+                    raise ValueError("Expected three parts (userid, zoneid, diamond)")
+                userid, zoneid, diamond = parts
+        except Exception as e:
+            await message.answer(f"⚠️ Invalid format: {account_str}")
+            return
+
+        try:
+            # Get current balance
+            my_bal_row = db.fetchone('SELECT amount FROM balance WHERE user_id=?', (user_id,))
+            if not my_bal_row:
+                await message.answer("❌ Could not retrieve your balance")
+                return
+
+            my_bal = float(my_bal_row[0])
+            current_date = datetime.now().strftime("%d %B %Y")
+
+            # Handle WP packages if "wp" is present in diamond.
+            if "wp" in diamond:
+                if diamond.startswith("wp"):
+                    # Extract the number that follows "wp"
+                    pack_number = diamond[len("wp"):]
+                else:
+                    # Fallback: if not starting with "wp", use the original logic.
+                    pack_number = diamond.split("wp")[0]
+                actual_wp = 0
+
+                # Get pricing info
+                pri = db.fetchall('SELECT package_no, diamond, price FROM dia_price')
+                coin_value = next((price for pkg, d, price in pri if d == diamond), None)
+                package_no = next((pkg for pkg, d, price in pri if d == diamond), None)
+
+                # Verify user account
+                account_info = await smile_one.get_role(userid, zoneid, '16642')
+                data = json.loads(account_info)
+
+                if data.get("message") != "success":
+                    await message.answer(f"❌ Invalid account: {userid} {zoneid}")
+                    return
+
+                username = data['username']
+                tran_id = []
+                status = "success"
+
+                if float(coin_value) > my_bal:
+                    await message.answer("❌ Insufficient balance")
+                    return
+
+                # Process WP purchases (repeat for the number provided after "wp")
+                for _ in range(int(pack_number)):
+                    purchase = await smile_one.get_purchase(userid, zoneid, '16642')
+                    try:
+                        pur_data = json.loads(purchase)
+                        if pur_data['message'] == 'success':
+                            actual_wp += 1
+                            tran_id.append(pur_data['order_id'])
+                        else:
+                            coin_value -= 76
+                    except json.JSONDecodeError:
+                        coin_value -= 76
+
+                # Update balance and database
+                my_bal -= coin_value
+                db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                db.query(
+                    "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                    (user_id, diamond, coin_value, current_date, status, main_user)
+                )
+
+                # Send voucher
+                await process_toupup_voucher(
+                    message,
+                    tran_id="\n".join(tran_id),
+                    diamond=diamond,
+                    actual_wp=actual_wp,
+                    userid=userid,
+                    zoneid=zoneid,
+                    username=username,
+                    status=status,
+                    coin_value=coin_value,
+                    my_bal=my_bal,
+                    formatted_date=current_date
+                )
+
+            else:
+                # Handle regular diamond purchases
+                pri = db.fetchall('SELECT package_no, diamond, price FROM dia_price WHERE package_no NOT BETWEEN 16 AND 25')
+                coin_value = next((price for pkg, d, price in pri if str(d) == str(diamond)), None)
+                package_no = next((pkg for pkg, d, price in pri if str(d) == str(diamond)), None)
+                print(package_no)
+                if not package_no or package_no - 1 >= len(id_list):
+                    await message.answer(f"⚠️ Invalid diamond package: {diamond}")
+                    return
+
+                # Get product id from list based on package number.
+                product_id = id_list[package_no - 1]
+                print(product_id)
+                # Check if product_id is a composite (contains '+')
+                if '+' in product_id:
+                    # Split the composite product_id into its sub-products.
+                    sub_products = product_id.split('+')
+                    all_verified = True
+                    username = None
+                    # Verify the account for each sub-product.
+                    for sp in sub_products:
+                        account_info = await smile_one.get_role(userid, zoneid, sp)
+                        data = json.loads(account_info)
+                        if data.get("message") != "success":
+                            await message.answer(f"❌ Invalid account: {userid} {zoneid} for product {sp}")
+                            all_verified = False
+                            break
+                        # Assume that the username is the same for each product.
+                        username = data['username']
+                    if not all_verified:
+                        return
+
+                    if coin_value > my_bal:
+                        await message.answer("❌ Insufficient balance")
+                        return
+
+                    tran_id = []
+                    status = "success"
+                    # Process purchase for each sub-product.
+                    for sp in sub_products:
+                        purchase = await smile_one.get_purchase(userid, zoneid, sp)
+                        try:
+                            pur_data = json.loads(purchase)
+                            if pur_data["message"] != 'success':
+                                status = "fail"
+                                tran_id.append(f"Failed transaction for product {sp}")
+                            else:
+                                tran_id.append(pur_data['order_id'])
+                        except json.JSONDecodeError:
+                            status = "fail"
+                            tran_id.append(f"Failed transaction for product {sp}")
+
+                    # Update balance and record the transaction.
+                    my_bal -= coin_value
+                    db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                    db.query(
+                        "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                        (user_id, diamond, coin_value, current_date, status, main_user)
+                    )
+
+                    # Send voucher
+                    await process_toupup_voucher(
+                        message,
+                        tran_id="\n".join(tran_id),
+                        diamond=diamond,
+                        actual_wp=0,
+                        userid=userid,
+                        zoneid=zoneid,
+                        username=username,
+                        status=status,
+                        coin_value=coin_value,
+                        my_bal=my_bal,
+                        formatted_date=current_date
+                    )
+
+                else:
+                    # Process single product purchase
+                    account_info = await smile_one.get_role(userid, zoneid, product_id)
+                    data = json.loads(account_info)
+
+                    if data.get("message") != "success":
+                        await message.answer(f"❌ Invalid account: {userid} {zoneid}")
+                        return
+
+                    username = data['username']
+                    tran_id = []
+                    status = "success"
+
+                    if coin_value > my_bal:
+                        await message.answer("❌ Insufficient balance")
+                        return
+
+                    # Process purchase for the single product.
+                    purchase = await smile_one.get_purchase(userid, zoneid, product_id)
+                    try:
+                        pur_data = json.loads(purchase)
+                        if pur_data["message"] != 'success':
+                            status = "fail"
+                            coin_value -= price_l.get(str(product_id), 0)
+                            tran_id.append("Failed transaction")
+                        else:
+                            tran_id.append(pur_data['order_id'])
+                    except json.JSONDecodeError:
+                        coin_value -= price_l.get(str(product_id), 0)
+                        status = "fail"
+
+                    # Update balance and record the transaction.
+                    my_bal -= coin_value
+                    db.query("UPDATE balance SET amount=? WHERE user_id=?", (my_bal, user_id))
+                    db.query(
+                        "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                        (user_id, diamond, coin_value, current_date, status, main_user)
+                    )
+
+                    # Send voucher
+                    await process_toupup_voucher(
+                        message,
+                        tran_id="\n".join(tran_id),
+                        diamond=diamond,
+                        actual_wp=0,
+                        userid=userid,
+                        zoneid=zoneid,
+                        username=username,
+                        status=status,
+                        coin_value=coin_value,
+                        my_bal=my_bal,
+                        formatted_date=current_date
+                    )
+
+        except Exception as e:
+            await message.answer(f"⚠️ Error processing {account_str}: {str(e)}")
+            logger.exception(f"Error processing {account_str}")
+
+    # Split and process all accounts
+    try:
+        # Get text after the .b command and split by commas.
+        accounts = message.text.split('.b', 1)[1].strip().split(',')
+        for account in accounts:
+            if account.strip():
+                await process_single_account(account.strip())
+    except IndexError:
+        await message.answer("❌ Invalid command format. Use:\n"
+                             "Format A: .b userid(zoneid)diamond,userid2(zone2)diamond2,...\n"
+                             "Format B: .b userid zoneid diamond,userid2 zone2 diamond2,...")
+
+
+@dp.message(F.text.regexp(r'\.ph_topup'))
+async def toupup_ph(message: types.Message, state: FSMContext) -> None:
+    user_id = message.from_user.id
+    main_user = user_id
+    
+    # Price list and ID list (consider moving these to config/database)
+    price_l = {
+        '212': 10.00, '213': 19.00, '214': 47.50, '215': 95.00,
+        '216': 190.00, '217': 285.00, '218': 475.00, '219': 950.00,
+        '20338': 229.71
+    }
+    
+    id_list = ['212','213','214','215','216','217','218','219','20338']
+
+    async def process_single_account(account_str: str):
+        """Process topup for a single PH account"""
+        try:
+            # Clean and parse account string
+            clean_str = re.sub(r"[\n\t\s]*", "", account_str)
+            userid, rest = clean_str.split("(", 1)
+            zoneid, diamond_str = rest.split(")", 1)
+            diamond = int(diamond_str)
+        except (ValueError, TypeError) as e:
+            await message.answer(f"⚠️ Invalid format: {account_str}")
+            return
+
+        try:
+            # Get current balance
+            my_bal_row = db.fetchone('SELECT amount FROM balance_ph WHERE user_id=?', (user_id,))
+            if not my_bal_row:
+                await message.answer("❌ Could not retrieve your PH balance")
+                return
+                
+            my_bal = float(my_bal_row[0])
+            current_date = datetime.now().strftime("%d %B %Y")
+
+            # Get pricing info
+            pri = db.fetchall('SELECT package_no,diamond,price FROM dia_price_ph')
+            coin_value = next((y for z, x, y in pri if int(x) == diamond), None)
+            package_no = next((z for z, x, y in pri if int(x) == diamond), None)
+            
+            if not package_no or package_no-1 >= len(id_list):
+                await message.answer(f"⚠️ Invalid diamond package: {diamond}")
+                return
+                
+            product_id = id_list[package_no-1]
+
+            # Verify user account
+            account_info = await smile_one_ph.get_role(userid, zoneid, product_id)
+            data = json.loads(account_info)
+            
+            if data.get("message") != "success":
+                await message.answer(f"❌ Invalid PH account: {userid} {zoneid}")
+                return
+                
+            username = data['username']
+            tran_id = []
+            status = "success"
+
+            if coin_value > my_bal:
+                await message.answer("❌ Insufficient PH balance")
+                return
+
+            # Process purchase
+            purchase = await smile_one_ph.get_purchase(userid, zoneid, product_id)
+            try:
+                pur_data = json.loads(purchase)
+                if pur_data["message"] != 'success':
+                    status = "fail"
+                    coin_value -= price_l.get(str(product_id), 0)
+                    tran_id.append("Failed transaction")
+                else:
+                    tran_id.append(pur_data['order_id'])
+            except json.JSONDecodeError:
+                coin_value -= price_l.get(str(product_id), 0)
+                status = "fail"
+
+            # Update balance and database
+            my_bal -= coin_value
+            db.query("UPDATE balance_ph SET amount=? WHERE user_id=?", (my_bal, user_id))
+            db.query(
+                "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                (user_id, diamond, coin_value, current_date, status, main_user)
+            )
+
+            # Send voucher
+            await process_toupup_voucher(
+                message,
+                tran_id="\n".join(tran_id),
+                diamond=diamond,
+                actual_wp=0,
+                userid=userid,
+                zoneid=zoneid,
+                username=username,
+                status=status,
+                coin_value=coin_value,
+                my_bal=my_bal,
+                formatted_date=current_date
+            )
+
+        except Exception as e:
+            await message.answer(f"⚠️ Error processing {account_str}: {str(e)}")
+            print(f"Error processing PH account {account_str}")
+
+    # Split and process all accounts
+    try:
+        accounts = message.text.split('.ph_topup', 1)[1].strip().split(',')
+        for account in accounts:
+            if account.strip():
+                await process_single_account(account.strip())
+    except IndexError:
+        await message.answer("❌ Invalid command format. Use: .ph_topup uid(zone)diamonds,uid2(zone2)diamonds2,...")
+
+@dp.message(F.text.regexp(r'\.p'))
+async def toupup_ph(message: types.Message, state: FSMContext) -> None:
+    user_id = message.from_user.id
+    main_user = user_id
+    
+    # Price list and ID list (consider moving these to config/database)
+    price_l = {
+        '212': 10.00, '213': 19.00, '214': 47.50, '215': 95.00,
+        '216': 190.00, '217': 285.00, '218': 475.00, '219': 950.00,
+        '20338': 229.71
+    }
+    
+    id_list = ['212','213','214','215','216','217','218','219','20338']
+
+    async def process_single_account(account_str: str):
+        """Process topup for a single PH account supporting two input formats"""
+        try:
+            if "(" in account_str and ")" in account_str:
+                # Format A: "uid(zone)diamond"
+                clean_str = re.sub(r"[\n\t\s]*", "", account_str)
+                userid, rest = clean_str.split("(", 1)
+                zoneid, diamond_str = rest.split(")", 1)
+            else:
+                # Format B: "uid zone diamond"
+                parts = account_str.split()
+                if len(parts) != 3:
+                    raise ValueError("Expected three parts (uid, zone, diamond)")
+                userid, zoneid, diamond_str = parts
+
+            diamond = int(diamond_str)
+        except (ValueError, TypeError) as e:
+            await message.answer(f"⚠️ Invalid format: {account_str}")
+            return
+
+        try:
+            # Get current balance
+            my_bal_row = db.fetchone('SELECT amount FROM balance_ph WHERE user_id=?', (user_id,))
+            if not my_bal_row:
+                await message.answer("❌ Could not retrieve your PH balance")
+                return
+                
+            my_bal = float(my_bal_row[0])
+            current_date = datetime.now().strftime("%d %B %Y")
+
+            # Get pricing info
+            pri = db.fetchall('SELECT package_no, diamond, price FROM dia_price_ph')
+            coin_value = next((price for pkg, d, price in pri if int(d) == diamond), None)
+            package_no = next((pkg for pkg, d, price in pri if int(d) == diamond), None)
+            
+            if not package_no or package_no - 1 >= len(id_list):
+                await message.answer(f"⚠️ Invalid diamond package: {diamond}")
+                return
+                
+            product_id = id_list[package_no - 1]
+
+            # Verify user account
+            account_info = await smile_one_ph.get_role(userid, zoneid, product_id)
+            data = json.loads(account_info)
+            
+            if data.get("message") != "success":
+                await message.answer(f"❌ Invalid PH account: {userid} {zoneid}")
+                return
+                
+            username = data['username']
+            tran_id = []
+            status = "success"
+
+            if coin_value > my_bal:
+                await message.answer("❌ Insufficient PH balance")
+                return
+
+            # Process purchase
+            purchase = await smile_one_ph.get_purchase(userid, zoneid, product_id)
+            try:
+                pur_data = json.loads(purchase)
+                if pur_data["message"] != 'success':
+                    status = "fail"
+                    coin_value -= price_l.get(str(product_id), 0)
+                    tran_id.append("Failed transaction")
+                else:
+                    tran_id.append(pur_data['order_id'])
+            except json.JSONDecodeError:
+                coin_value -= price_l.get(str(product_id), 0)
+                status = "fail"
+
+            # Update balance and database
+            my_bal -= coin_value
+            db.query("UPDATE balance_ph SET amount=? WHERE user_id=?", (my_bal, user_id))
+            db.query(
+                "INSERT INTO transcation VALUES (?,?,?,?,?,?)",
+                (user_id, diamond, coin_value, current_date, status, main_user)
+            )
+
+            # Send voucher
+            await process_toupup_voucher(
+                message,
+                tran_id="\n".join(tran_id),
+                diamond=diamond,
+                actual_wp=0,
+                userid=userid,
+                zoneid=zoneid,
+                username=username,
+                status=status,
+                coin_value=coin_value,
+                my_bal=my_bal,
+                formatted_date=current_date
+            )
+
+        except Exception as e:
+            await message.answer(f"⚠️ Error processing {account_str}: {str(e)}")
+            print(f"Error processing PH account {account_str}")
+
+    # Split and process all accounts
+    try:
+        accounts = message.text.split('.p', 1)[1].strip().split(',')
+        for account in accounts:
+            if account.strip():
+                await process_single_account(account.strip())
+    except IndexError:
+        await message.answer("❌ Invalid command format. Use:\n"
+                             "Format A: .p uid(zone)diamond,uid2(zone2)diamond2,...\n"
+                             "Format B: .p uid zone diamond,uid2 zone2 diamond2,...")
+
+
+@dp.callback_query(F.data == "check_balance")
+async def check_balance(callback_query: types.CallbackQuery, state: FSMContext) -> None:
+    user_id = callback_query.from_user.id
     # Fetching balance from the database
     my_bal = db.fetchone('SELECT amount FROM balance WHERE user_id=?', (user_id,))
     my_bal_ph = db.fetchone('SELECT amount FROM balance_ph WHERE user_id=?', (user_id,))
@@ -981,8 +1149,12 @@ async def check_balance(message: types.Message, state: FSMContext) -> None:
     balance_ph_message = f"Your PH balance is: {hbold(my_bal_ph[0])} Coins 😊"
     
     # Sending responses
-    await message.answer(balance_message)
-    await message.answer(balance_ph_message)
+    await callback_query.message.answer(balance_message)
+    await callback_query.message.answer(balance_ph_message)
+    
+    # Optionally acknowledge the callback query to avoid interaction issues
+    await callback_query.answer()
+
 
     
 # States for selecting date range
@@ -1051,9 +1223,8 @@ def generate_voucher_pdf(transactions, title, filename):
     # Save to file
     pdf.output(filename)
 
-# Command to start voucher options 
-@dp.message(F.text == "/voucher")
-async def voucher_options(message: types.Message):
+@dp.callback_query(F.data == "voucher")
+async def voucher_options(callback_query: types.CallbackQuery):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Today", callback_data="today")],
         [InlineKeyboardButton(text="Yesterday", callback_data="yesterday")],
@@ -1062,7 +1233,12 @@ async def voucher_options(message: types.Message):
         [InlineKeyboardButton(text="Select Date", callback_data="select_date")],
         [InlineKeyboardButton(text="Select Range", callback_data="select_range")],
     ])
-    await message.answer("Choose an option to view your vouchers:", reply_markup=keyboard)
+    
+    await callback_query.answer()  # Acknowledge the callback query
+    await callback_query.message.answer(
+        "Choose an option to view your vouchers:",
+        reply_markup=keyboard
+    )
 
 # Callback handler for "Today"
 @dp.callback_query(F.data == "today")
@@ -1161,56 +1337,43 @@ async def handle_end_date(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@dp.message(Form.session, F.text.regexp(r'/menu'))
+@dp.message( F.text.regexp(r'/menu'))
 async def show_menu(message: types.Message) -> None:
     # Inline keyboard for navigation
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📜 View Price List", callback_data="price_list")],
         [InlineKeyboardButton(text="💎 Top-up Instructions", callback_data="topup_instructions")],
         [InlineKeyboardButton(text="⚖️ Check Balance", callback_data="check_balance")],
-        [InlineKeyboardButton(text="📖 View Top-up History", callback_data="view_history")]
+        [InlineKeyboardButton(text="📖 View Top-up History", callback_data="view_history")],
+        [InlineKeyboardButton(text="📖 View Voucher List", callback_data="voucher")]
     ])
-    
     # Beautified menu message
     await message.answer(
         "<b>🏷️ Commands Menu:</b>\n\n"
-        "🪙 <code>.price_list</code> — <i>View the price list</i>.\n"
-        "💎 <code>.topup userid(zoneid) diamonds</code> — <i>Top up for a single account</i>.\n"
-        "💎 <code>.topup_ph userid(zoneid) diamonds</code> — <i>Top up for a single account (PH)</i>.\n"
-        "💎 <code>.bulktopup userid(zoneid) diamonds,userid(zoneid) diamonds,...</code> — <i>Bulk top-up for multiple accounts</i>.\n"
-        "💎 <code>.ph_bulktopup userid(zoneid) diamonds,userid(zoneid) diamonds,...</code> — <i>Bulk top-up for multiple accounts (PH)</i>.\n"
-        "⚖️ <code>.check_balance</code> — <i>Check your balance</i>.\n"
-        "📜 <code>.history</code> — <i>Check your top-up history</i>.\n\n"
         "<b>🎯 Quick Actions:</b>\n"
         "<i>Use the buttons below for faster navigation!</i>",
         reply_markup=keyboard,
         parse_mode="HTML"
     )
 
-@dp.callback_query(F.data == "view_history")
-async def history_callback(callback_query: types.CallbackQuery) -> None:
-    await callback_query.message.answer(f"💎 Use `{hcode('.history')}` to check your top-up history")
-    await callback_query.answer()
 
-@dp.callback_query(F.data == "price_list")
-async def price_list_callback(callback_query: types.CallbackQuery) -> None:
-    await callback_query.message.answer(f"💎 Use `{hcode('.price_list')}` to view the price list!")
-    await callback_query.answer()
+
+
+
+
 
 @dp.callback_query(F.data == "topup_instructions")
 async def topup_instructions_callback(callback_query: types.CallbackQuery) -> None:
     await callback_query.message.answer(
-        "💎 Top-up Instructions:\n\n"
-        f"👉 {hcode('.topup userid(zoneid) diamonds')} -> Top up for a single account.\n"
-        f"👉 {hcode('.bulktopup userid(zoneid) diamonds,userid(zoneid) diamonds,...')} -> Bulk top up for multiple accounts.\n"
+         "💎 <code>.topup userid(zoneid) diamonds</code> — <i>Top up for Brazil Region</i>.\n"
+        "💎 <code>.topup_ph userid(zoneid) diamonds</code> — <i>Top up for Philippines Region (PH)</i>.\n"
+         "💎 <code>.b userid(zoneid) diamonds</code> — <i>Top up for Brazil Region</i>.\n"
+        "💎 <code>.p userid(zoneid) diamonds</code> — <i>Top up for Philippines Region (PH)</i>.\n"
         "💡 Replace `userid`, `zoneid`, and `diamonds` with appropriate values."
     )
     await callback_query.answer()
 
-@dp.callback_query(F.data == "check_balance")
-async def check_balance_callback(callback_query: types.CallbackQuery) -> None:
-    await callback_query.message.answer(f"⚖️ Use `{hcode('.check_balance')}` to view your account balance.")
-    await callback_query.answer()
+
 
 
 
@@ -1220,7 +1383,6 @@ async def main() -> None:
 
     await bot.set_my_commands([
         BotCommand(command="/start",description="to see login"),
-        BotCommand(command="/voucher",description="to see total transcations"),
         BotCommand(command="/menu",description="to see menu"),
         ]
         )
