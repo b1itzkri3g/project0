@@ -1,0 +1,94 @@
+2024-07-28 04:23:27,936 - root - WARNING - Blocked request: Missing reCAPTCHA
+2024-07-28 04:23:32,142 - root - WARNING - Blocked request: Missing reCAPTCHA
+2024-07-28 04:26:00,466 - root - WARNING - Blocked request: Missing reCAPTCHA
+2024-07-28 04:31:19,389 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,389 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,390 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,391 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,391 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,392 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,394 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,394 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,559 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,562 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,685 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,687 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,758 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,817 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:19,856 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:20,260 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:20,413 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:30,431 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:35,654 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,985 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,985 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,986 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,986 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,987 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,988 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:46,989 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,227 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,229 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,316 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,367 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,425 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,441 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,567 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,667 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:47,744 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:49,985 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:55,696 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:31:58,620 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:32:01,574 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:32:04,433 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:32:07,619 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,555 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,555 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,556 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,561 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,562 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,563 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,563 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,563 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,567 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,569 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,584 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,587 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,590 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,592 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,594 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,636 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,828 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:37,887 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:37:47,200 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 04:38:36,171 - root - WARNING - Blocked bot request from 127.0.0.1 with user agent Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+2024-07-28 09:30:48,612 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-07-28 10:28:17,450 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-01 01:18:38,742 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-01 01:19:42,926 - root - WARNING - Blocked malicious request: /%3Cimg%20src=x%20onerror=alert(1)%3E with body 
+2024-08-01 01:21:38,810 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-01 02:16:22,633 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-01 02:16:33,339 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-01 02:21:00,142 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-01 02:27:38,552 - root - WARNING - Blocked malicious request: /%3Cimg%20src=x%20onerror=alert(1)%3E with body 
+2024-08-01 02:27:49,172 - root - WARNING - Blocked malicious request: /%3Csvg%20onload=alert(1)%3E with body 
+2024-08-01 02:27:53,062 - root - WARNING - Blocked malicious request: /%3Csvg%20onad=alert(1)%3E with body 
+2024-08-02 03:25:25,754 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-02 03:25:41,530 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-02 03:25:47,420 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-02 03:26:07,720 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-02 03:26:14,456 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-02 03:26:15,600 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-02 21:45:42,663 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-02 21:46:12,870 - root - WARNING - Blocked malicious request: /%3Cimg%20src=x%20onload=alert(1)%3E with body 
+2024-08-02 21:46:26,436 - root - WARNING - Blocked malicious request: /%7B%7B7*7%7D%7D with body 
+2024-08-02 22:43:21,411 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-03 00:22:10,228 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-03 00:51:54,872 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2024-08-03 00:55:43,600 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2025-02-11 10:11:57,549 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2025-02-11 10:14:44,071 - root - WARNING - Blocked malicious request: /api/authentication with body j_username=%3Cscript%3Ealert(1)%3C%2Fscript%3E&j_password=asdf&remember-me=undefined&submit=Login
+2025-02-11 10:15:23,507 - root - WARNING - Blocked malicious request: /%3Cscript%3Ealert(1)%3C/script%3E with body 
+2025-02-11 10:17:22,312 - root - WARNING - Blocked malicious request: /union with body 
+2025-02-11 10:17:30,809 - root - WARNING - Blocked malicious request: /'%20union%20select with body 
+2025-02-11 10:29:34,213 - root - WARNING - Blocked malicious request: /'%20union%20select%201,2,3,4 with body 
